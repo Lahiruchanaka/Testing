@@ -3,10 +3,7 @@ package lk.ijse.pos.model;
 import java.util.Date;
 
 
-/**
- * @author : Sanu Vithanage
- * @since : 0.1.0
- **/
+
 public class Orders {
     private String id;
     private Date date;

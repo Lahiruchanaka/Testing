@@ -9,10 +9,7 @@ import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.ArrayList;
 
-/**
- * @author : Sanu Vithanage
- * @since : 0.1.0
- **/
+
 public class CustomerDAOImpl {
 
     public boolean addCustomer(Customer customer) throws Exception {
