@@ -1,8 +1,6 @@
 package lk.ijse.pos.dao;
-
 import lk.ijse.pos.db.DBConnection;
 import lk.ijse.pos.model.Item;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -10,8 +8,8 @@ import java.sql.Statement;
 import java.util.ArrayList;
 
 
-public class ItemDAOImpl {
 
+public class ItemDAOImpl {
     public boolean addItem(Item item) throws Exception {
         Connection connection = DBConnection.getInstance().getConnection();
         PreparedStatement pstm = connection.prepareStatement("INSERT INTO Item VALUES (?,?,?,?)");
@@ -21,15 +19,12 @@ public class ItemDAOImpl {
         pstm.setObject(4, item.getQtyOnHand());
         return (pstm.executeUpdate() > 0);
     }
-
     public boolean deleteItem(String code) throws Exception {
         Connection connection = DBConnection.getInstance().getConnection();
         PreparedStatement pstm = connection.prepareStatement("DELETE FROM Item WHERE code=?");
         pstm.setObject(1, code);
         return (pstm.executeUpdate() > 0);
     }
-
-
     public boolean updateItem(Item item) throws Exception {
         Connection connection = DBConnection.getInstance().getConnection();
         PreparedStatement pstm = connection.prepareStatement("UPDATE Item SET description=?, unitPrice=?, qtyOnHand=? WHERE code=?");
@@ -39,6 +34,16 @@ public class ItemDAOImpl {
         pstm.setObject(4, item.getCode());
         return (pstm.executeUpdate() > 0);
     }
+
+
+    public boolean updateItemQtyOnHand(String code,int qtyOnHand) throws Exception {
+        Connection connection = DBConnection.getInstance().getConnection();
+        PreparedStatement pstm = connection.prepareStatement("UPDATE Item SET qtyOnHand=? WHERE code=?");
+        pstm.setObject(1, qtyOnHand);
+        pstm.setObject(2, code);
+        return (pstm.executeUpdate() > 0);
+    }
+
 
 
     public Item searchItem(String code) throws Exception {
@@ -54,7 +59,6 @@ public class ItemDAOImpl {
         }
         return null;
     }
-
     public ArrayList<Item> getAllItems() throws Exception {
         Connection connection = DBConnection.getInstance().getConnection();
         Statement stm = connection.createStatement();
