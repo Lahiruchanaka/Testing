@@ -41,6 +41,7 @@ import java.util.logging.Logger;
 
 
 
+
 public class OrderFormController implements Initializable {
     @FXML
     private JFXComboBox<String> cmbCustomerID;
@@ -76,7 +77,7 @@ public class OrderFormController implements Initializable {
             connection = DBConnection.getInstance().getConnection();
             connection = DBConnection.getInstance().getConnection();
 
-            // Create a day cell factory
+
             Callback<DatePicker, DateCell> dayCellFactory = new Callback<DatePicker, DateCell>() {
                 public DateCell call(final DatePicker datePicker) {
                     return new DateCell() {
@@ -243,13 +244,13 @@ public class OrderFormController implements Initializable {
                             cmbItemCode.getItems().add(itemCode);
                         }
 
-                    } catch (Exception e) {
+                    } catch(Exception e){
                         e.printStackTrace();
                     }
 
                 }
                 @FXML
-                private void navigateToMain(MouseEvent event) throws IOException {
+                private void navigateToMain (MouseEvent event) throws IOException {
                     Label lblMainNav = (Label) event.getSource();
                     Stage primaryStage = (Stage) lblMainNav.getScene().getWindow();
                     Parent root = FXMLLoader.load(this.getClass().getResource("/lk/ijse/pos/view/MainForm.fxml"));
@@ -258,7 +259,7 @@ public class OrderFormController implements Initializable {
                     primaryStage.centerOnScreen();
                 }
                 @FXML
-                private void btnSaveOnAction(ActionEvent event) {
+                private void btnSaveOnAction (ActionEvent event){
                     String itemCode = cmbItemCode.getSelectionModel().getSelectedItem();
                     int qty = Integer.parseInt(txtQty.getText());
                     double unitPrice = Double.parseDouble(txtUnitPrice.getText());
@@ -291,12 +292,12 @@ public class OrderFormController implements Initializable {
                     cmbItemCode.requestFocus();
                 }
                 @FXML
-                private void btnRemoveOnAction(ActionEvent event) {
+                private void btnRemoveOnAction (ActionEvent event){
                     OrderDetailTM selectedRow = tblOrderDetails.getSelectionModel().getSelectedItem();
                     olOrderDetails.remove(selectedRow);
                 }
                 @FXML
-                private void btnPlaceOrderOnAction(ActionEvent event) {
+                private void btnPlaceOrderOnAction (ActionEvent event){
                     try {
                         connection.setAutoCommit(false);
                         String sql = "INSERT INTO Orders VALUES (?,?,?)";
@@ -334,7 +335,7 @@ public class OrderFormController implements Initializable {
                             Item item = itemDAO.searchItem(orderDetail.getItemCode());
 
                             affectedRows = pstm2.executeUpdate();
-                            if (item!=null) {
+                            if (item != null) {
                                 qtyOnHand = item.getQtyOnHand();
                             }
                             ItemDAOImpl itemDAO1 = new ItemDAOImpl();
@@ -349,16 +350,16 @@ public class OrderFormController implements Initializable {
                             connection.commit();
                             Alert alert = new Alert(Alert.AlertType.INFORMATION, "Order Placed", ButtonType.OK);
                             alert.show();
-                        } catch (SQLException ex) {
+                        } catch(SQLException ex){
                             try {
                                 connection.rollback();
                             } catch (SQLException ex1) {
                                 Logger.getLogger(OrderFormController.class.getName()).log(Level.SEVERE, null, ex1);
                             }
                             Logger.getLogger(OrderFormController.class.getName()).log(Level.SEVERE, null, ex);
-                        } catch (Exception e) {
+                        } catch(Exception e){
                             e.printStackTrace();
-                        } finally {
+                        } finally{
                             try {
                                 connection.setAutoCommit(true);
                             } catch (SQLException ex) {
@@ -366,7 +367,7 @@ public class OrderFormController implements Initializable {
                             }
                         }
                     }
-                    private Date parseDate(String date) {
+                    private Date parseDate (String date){
                         SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy");
                         try {
                             return sdf.parse(date);
@@ -376,3 +377,4 @@ public class OrderFormController implements Initializable {
                         }
                     }
                 }
+            }
