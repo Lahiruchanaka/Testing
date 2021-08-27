@@ -9,6 +9,7 @@ import java.util.ArrayList;
 
 
 
+
 public class ItemDAOImpl {
     public boolean addItem(Item item) throws Exception {
         Connection connection = DBConnection.getInstance().getConnection();
