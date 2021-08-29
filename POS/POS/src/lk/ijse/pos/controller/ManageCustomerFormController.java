@@ -29,6 +29,8 @@ import java.util.logging.Logger;
 
 
 
+
+
 public class ManageCustomerFormController implements Initializable {
 
     boolean addnew = true;
