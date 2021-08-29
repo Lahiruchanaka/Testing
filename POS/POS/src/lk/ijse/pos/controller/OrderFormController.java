@@ -329,7 +329,12 @@ public class OrderFormController implements Initializable {
             }
 
             /*Add Order Details to the Table*/
-            OrderDetailsDAO orderDetailsDAO = new OrderDetailsDAO();
+            OrderDetailsDAO orderDetailsDAO = new OrderDetailsDAO() {
+                @Override
+                public boolean addOrderDetails(OrderDetails oDetails) throws Exception {
+                    return false;
+                }
+            };
             for (OrderDetailTM orderDetailTM : olOrderDetails) {
 
                 OrderDetails orderDetails = new OrderDetails(
