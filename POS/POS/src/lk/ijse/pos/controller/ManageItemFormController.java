@@ -16,7 +16,8 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.stage.Stage;
 import lk.ijse.pos.AppInitializer;
-import lk.ijse.pos.dao.ItemDAOImpl;
+import lk.ijse.pos.dao.custom.ItemDAO;
+import lk.ijse.pos.dao.custom.impl.ItemDAOImpl;
 import lk.ijse.pos.model.Item;
 import lk.ijse.pos.view.tblmodel.ItemTM;
 
@@ -30,8 +31,9 @@ import java.util.logging.Logger;
 
 
 
-public class ManageItemFormController implements Initializable{
+public class ManageItemFormController implements Initializable {
 
+    private ItemDAO itemDAO = new ItemDAOImpl();
     @FXML
     private JFXTextField txtItemCode;
     @FXML
@@ -44,26 +46,20 @@ public class ManageItemFormController implements Initializable{
     private AnchorPane root;
     @FXML
     private TableView<ItemTM> tblItems;
-
     private boolean addNew = true;
 
-    private void loadAllItems(){
+    private void loadAllItems() {
 
         try {
             /*Get All Items*/
-            ItemDAOImpl itemDAO = new ItemDAOImpl();
-            ArrayList<Item> allItems = itemDAO.getAllItems();
-
+            ArrayList<Item> allItems = itemDAO.getAll();
             /*create a ItemTM type list*/
-            ArrayList<ItemTM> allItemsForTable= new ArrayList<>();
-
+            ArrayList<ItemTM> allItemsForTable = new ArrayList<>();
             for (Item i : allItems) {
-                allItemsForTable.add(new ItemTM(i.getCode(),i.getDescription(),i.getUnitPrice(),i.getQtyOnHand()));
+                allItemsForTable.add(new ItemTM(i.getCode(), i.getDescription(), i.getUnitPrice(), i.getQtyOnHand()));
             }
-
             ObservableList<ItemTM> olItems = FXCollections.observableArrayList(allItemsForTable);
             tblItems.setItems(olItems);
-
         } catch (Exception ex) {
             Logger.getLogger(ManageItemFormController.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -89,7 +85,7 @@ public class ManageItemFormController implements Initializable{
             @Override
             public void changed(ObservableValue<? extends ItemTM> observable, ItemTM oldValue, ItemTM newValue) {
 
-                if (newValue == null){
+                if (newValue == null) {
                     addNew = true;
                     clearTextFields();
                     return;
@@ -99,14 +95,12 @@ public class ManageItemFormController implements Initializable{
                 txtDescription.setText(newValue.getDescription());
                 txtUnitPrice.setText(newValue.getUnitPrice().toPlainString());
                 txtQty.setText(newValue.getQtyOnHand() + "");
-
                 addNew = false;
-
             }
         });
     }
 
-    private void clearTextFields(){
+    private void clearTextFields() {
         txtItemCode.setText("");
         txtDescription.setText("");
         txtUnitPrice.setText("");
@@ -120,51 +114,40 @@ public class ManageItemFormController implements Initializable{
 
     @FXML
     private void btnAddNewItem_OnAction(ActionEvent event) {
-
         tblItems.getSelectionModel().clearSelection();
         txtItemCode.requestFocus();
         addNew = true;
-
     }
 
     @FXML
     private void btnSave_OnAction(ActionEvent event) {
-
-        if (addNew){
-
+        if (addNew) {
             try {
-
-               /*Add Item*/
-                ItemDAOImpl itemDAO = new ItemDAOImpl();
-                Item item = new Item(txtItemCode.getText(),txtDescription.getText(),new BigDecimal(txtUnitPrice.getText()),Integer.parseInt(txtQty.getText()));
-                boolean b = itemDAO.addItem(item);
-                if (b){
+                /*Add Item*/
+                Item item = new Item(txtItemCode.getText(), txtDescription.getText(), new BigDecimal(txtUnitPrice.getText()), Integer.parseInt(txtQty.getText()));
+                boolean b = itemDAO.add(item);
+                if (b) {
                     loadAllItems();
-                }else{
+                } else {
                     new Alert(Alert.AlertType.ERROR, "Failed to add the item", ButtonType.OK).show();
                 }
             } catch (Exception ex) {
                 Logger.getLogger(ManageItemFormController.class.getName()).log(Level.SEVERE, null, ex);
             }
 
-
-        }else{
-
+        } else {
             try {
-               /*Update Item*/
-                ItemDAOImpl itemDAO = new ItemDAOImpl();
-                Item item = new Item(txtItemCode.getText(),txtDescription.getText(),new BigDecimal(txtUnitPrice.getText()),Integer.parseInt(txtQty.getText()));
-                boolean b = itemDAO.updateItem(item);
-                if (b){
+                /*Update Item*/
+                Item item = new Item(txtItemCode.getText(), txtDescription.getText(), new BigDecimal(txtUnitPrice.getText()), Integer.parseInt(txtQty.getText()));
+                boolean b = itemDAO.update(item);
+                if (b) {
                     loadAllItems();
-                }else{
+                } else {
                     new Alert(Alert.AlertType.ERROR, "Failed to update the item", ButtonType.OK).show();
                 }
             } catch (Exception ex) {
                 Logger.getLogger(ManageItemFormController.class.getName()).log(Level.SEVERE, null, ex);
             }
-
-
         }
 
 
@@ -174,17 +157,15 @@ public class ManageItemFormController implements Initializable{
     private void btnDelete_OnAction(ActionEvent event) {
 
         if (tblItems.getSelectionModel().getSelectedIndex() == -1) return;
-
         String code = tblItems.getSelectionModel().getSelectedItem().getCode();
 
         try {
-          /*Delete Item*/
-            ItemDAOImpl itemDAO = new ItemDAOImpl();
-            boolean b = itemDAO.deleteItem(code);
-            if (b){
+            /*Delete Item*/
+            boolean b = itemDAO.delete(code);
+            if (b) {
                 loadAllItems();
-            }else{
-                new Alert(Alert.AlertType.ERROR,"Unable to delete the customer", ButtonType.OK).show();
+            } else {
+                new Alert(Alert.AlertType.ERROR, "Unable to delete the customer", ButtonType.OK).show();
             }
         } catch (Exception ex) {
             Logger.getLogger(ManageItemFormController.class.getName()).log(Level.SEVERE, null, ex);
