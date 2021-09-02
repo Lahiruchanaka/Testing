@@ -20,17 +20,19 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.input.MouseEvent;
 import javafx.stage.Stage;
 import javafx.util.Callback;
-import lk.ijse.pos.db.DBConnection;
-import lk.ijse.pos.model.Customer;
-import lk.ijse.pos.model.Item;
-import lk.ijse.pos.model.OrderDetails;
-import lk.ijse.pos.model.Orders;
+import lk.ijse.pos.bo.BOFactory;
+import lk.ijse.pos.bo.custom.CustomerBO;
+import lk.ijse.pos.bo.custom.ItemBO;
+import lk.ijse.pos.bo.custom.PurchaseOrderBO;
+import lk.ijse.pos.dto.CustomerDTO;
+import lk.ijse.pos.dto.ItemDTO;
+import lk.ijse.pos.dto.OrderDetailsDTO;
+import lk.ijse.pos.dto.OrdersDTO;
 import lk.ijse.pos.view.tblmodel.OrderDetailTM;
 
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.net.URL;
-import java.sql.Connection;
 import java.sql.SQLException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -44,8 +46,12 @@ import java.util.logging.Logger;
 
 
 
+
 public class OrderFormController implements Initializable {
 
+    private final CustomerBO customerBO = (CustomerBO) BOFactory.getBoFactory().getBO(BOFactory.BOTypes.CUSTOMER);
+    private final ItemBO itemBO = (ItemBO) BOFactory.getBoFactory().getBO(BOFactory.BOTypes.ITEM);
+    private final PurchaseOrderBO purchaseOrderBO = (PurchaseOrderBO) BOFactory.getBoFactory().getBO(BOFactory.BOTypes.ORDER);
 
     @FXML
     private JFXComboBox<String> cmbCustomerID;
@@ -62,6 +68,7 @@ public class OrderFormController implements Initializable {
     @FXML
     private JFXTextField txtQty;
     @FXML
+
     private TableView<OrderDetailTM> tblOrderDetails;
     private ObservableList<OrderDetailTM> olOrderDetails;
     private boolean update = false;
@@ -73,14 +80,10 @@ public class OrderFormController implements Initializable {
     private JFXTextField txtOrderID;
     @FXML
     private JFXDatePicker txtOrderDate;
-    private Connection connection;
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
-
         try {
-            connection = DBConnection.getInstance().getConnection();
-
             // Create a day cell factory
             Callback<DatePicker, DateCell> dayCellFactory = new Callback<DatePicker, DateCell>() {
                 public DateCell call(final DatePicker datePicker) {
@@ -114,9 +117,8 @@ public class OrderFormController implements Initializable {
                     txtCustomerName.setText("");
                     return;
                 }
-
                 try {
-                    Customer customer = customerDAO.search(customerID);
+                    CustomerDTO customer = customerBO.searchCustomer(customerID);
                     if (customer != null) {
                         txtCustomerName.setText(customer.getName());
                     }
@@ -143,10 +145,8 @@ public class OrderFormController implements Initializable {
                     txtQty.setText("");
                     return;
                 }
-
                 try {
-
-                    Item item = itemDAO.search(itemCode);
+                    ItemDTO item = itemBO.searchItem(itemCode);
                     if (item != null) {
                         String description = item.getDescription();
                         double unitPrice = item.getUnitPrice().doubleValue();
@@ -161,7 +161,6 @@ public class OrderFormController implements Initializable {
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
-
             }
         });
 
@@ -191,23 +190,19 @@ public class OrderFormController implements Initializable {
         tblOrderDetails.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<OrderDetailTM>() {
             @Override
             public void changed(ObservableValue<? extends OrderDetailTM> observable, OrderDetailTM oldValue, OrderDetailTM newValue) {
-
                 OrderDetailTM currentRow = observable.getValue();
-
                 if (currentRow == null) {
                     cmbItemCode.getSelectionModel().clearSelection();
                     update = false;
                     btnRemove.setDisable(true);
                     return;
                 }
-
                 update = true;
                 String itemCode = currentRow.getItemCode();
                 btnRemove.setDisable(false);
 
                 cmbItemCode.getSelectionModel().select(itemCode);
                 txtQty.setText(currentRow.getQty() + "");
-
             }
         });
 
@@ -218,19 +213,15 @@ public class OrderFormController implements Initializable {
     private void loadAllData() throws SQLException {
         try {
 
-            ArrayList<Customer> allCustomers = customerDAO.getAll();
-
+            ArrayList<CustomerDTO> allCustomers = customerBO.getAllCustomers();
             cmbCustomerID.getItems().removeAll(cmbCustomerID.getItems());
-
-            for (Customer customer : allCustomers) {
-                String id = customer.getcID();
+            for (CustomerDTO customer : allCustomers) {
+                String id = customer.getId();
                 cmbCustomerID.getItems().add(id);
             }
-
-            ArrayList<Item> allItems = itemDAO.getAll();
-
+            ArrayList<ItemDTO> allItems = itemBO.getAllItems();
             cmbItemCode.getItems().removeAll(cmbItemCode.getItems());
-            for (Item item : allItems) {
+            for (ItemDTO item : allItems) {
                 String itemCode = item.getCode();
                 cmbItemCode.getItems().add(itemCode);
             }
@@ -271,13 +262,7 @@ public class OrderFormController implements Initializable {
             }
         }
 
-        OrderDetailTM orderDetail = new OrderDetailTM(
-                itemCode,
-                txtDescription.getText(),
-                qty,
-                unitPrice,
-                qty * unitPrice);
-
+        OrderDetailTM orderDetail = new OrderDetailTM(itemCode, txtDescription.getText(), qty, unitPrice, qty * unitPrice);
 
         if (!update) {
             olOrderDetails.add(orderDetail);
@@ -287,7 +272,6 @@ public class OrderFormController implements Initializable {
             int index = olOrderDetails.indexOf(selectedRow);
             olOrderDetails.set(index, orderDetail);
         }
-
         cmbItemCode.getSelectionModel().clearSelection();
         cmbItemCode.requestFocus();
 
@@ -297,76 +281,32 @@ public class OrderFormController implements Initializable {
     private void btnRemoveOnAction(ActionEvent event) {
         OrderDetailTM selectedRow = tblOrderDetails.getSelectionModel().getSelectedItem();
         olOrderDetails.remove(selectedRow);
-
     }
 
     @FXML
     private void btnPlaceOrderOnAction(ActionEvent event) {
         try {
-            connection.setAutoCommit(false);
-
             /*Add Order Record*/
-            Orders orders = new Orders(txtOrderID.getText(), parseDate(txtOrderDate.getEditor().getText()), cmbCustomerID.getSelectionModel().getSelectedItem());
-            boolean b1 = orderDAO.add(orders);
-            System.out.println("Order State :" + b1);
-            if (!b1) {
-                connection.rollback();
-                return;
-            }
+            OrdersDTO orders = new OrdersDTO(txtOrderID.getText(), parseDate(txtOrderDate.getEditor().getText()), cmbCustomerID.getSelectionModel().getSelectedItem());
 
+            ArrayList<OrderDetailsDTO> allOrderDetails = new ArrayList<>();
             /*Add Order Details to the Table*/
             for (OrderDetailTM orderDetailTM : olOrderDetails) {
-
-                OrderDetails orderDetails = new OrderDetails(
-                        txtOrderID.getText(),
-                        orderDetailTM.getItemCode(),
-                        orderDetailTM.getQty(),
-                        new BigDecimal(orderDetailTM.getUnitPrice()));
-
-                boolean b2 = orderDetailsDAO.add(orderDetails);
-                System.out.println("Order Details State :" + b2);
-                if (!b2) {
-                    connection.rollback();
-                    return;
-                }
-
-                int qtyOnHand = 0;
-
-                Item item = itemDAO.search(orderDetailTM.getItemCode());
-
-                if (item != null) {
-                    qtyOnHand = item.getQtyOnHand();
-                }
-
-                boolean b = itemDAO.updateItemQtyOnHand(orderDetailTM.getItemCode(), qtyOnHand - orderDetailTM.getQty());
-                System.out.println("Item Qty Update State :" + b);
-                if (!b) {
-                    connection.rollback();
-                    return;
-                }
-
+                allOrderDetails.add(new OrderDetailsDTO(txtOrderID.getText(), orderDetailTM.getItemCode(), orderDetailTM.getQty(), new BigDecimal(orderDetailTM.getUnitPrice())));
             }
 
-            connection.commit();
-            Alert alert = new Alert(Alert.AlertType.INFORMATION, "Order Placed", ButtonType.OK);
-            alert.show();
+            orders.setOrderDetails(allOrderDetails);
 
-        } catch (SQLException ex) {
-            try {
-                connection.rollback();
-            } catch (SQLException ex1) {
-                Logger.getLogger(OrderFormController.class.getName()).log(Level.SEVERE, null, ex1);
+            if (purchaseOrderBO.purchaseOrder(orders)) {
+
+                Alert alert = new Alert(Alert.AlertType.INFORMATION, "Order Placed", ButtonType.OK);
+                alert.show();
             }
-            Logger.getLogger(OrderFormController.class.getName()).log(Level.SEVERE, null, ex);
         } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            try {
-                connection.setAutoCommit(true);
-            } catch (SQLException ex) {
-                Logger.getLogger(OrderFormController.class.getName()).log(Level.SEVERE, null, ex);
-            }
+            Alert alert = new Alert(Alert.AlertType.ERROR, e.getLocalizedMessage(), ButtonType.OK);
+            alert.show();
         }
+
 
     }
 
